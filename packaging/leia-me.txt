@@ -1,0 +1,83 @@
+CLIMAGUARD 1.6.4 - WINDOWS 10/11 (64 BITS)
+
+Este instalador cria o aplicativo ClimaGuard no menu Iniciar e pode criar um
+atalho na área de trabalho. O Python e as bibliotecas já estão incluídos.
+
+Se o Microsoft WebView2 estiver ausente, o instalador usará o instalador
+oficial da Microsoft para prepará-lo. Essa etapa precisa de internet.
+
+COMO COMEÇAR
+1. Abra o ClimaGuard pelo ícone.
+2. Crie sua conta. A primeira conta do notebook será administradora.
+3. Configure os destinatários em Meus alertas e as credenciais em Serviços.
+4. Ligue a placa já programada em uma fonte USB e escolha Placa real.
+   Placa e notebook devem estar na mesma rede local; a placa usa Wi-Fi 2,4 GHz.
+
+Mantenha o aplicativo aberto para continuar recebendo leituras e alertas.
+Para trocar a rede, use Wi-Fi da placa dentro do aplicativo.
+Feche o aplicativo antes de gravar firmware ou usar o Monitor Serial.
+O menu Aplicativo > Como usar contém instruções de configuração.
+
+As contas, credenciais e histórico são salvos em %LOCALAPPDATA%\ClimaGuard.
+Atualizar ou desinstalar o aplicativo não apaga esses dados pessoais.
+As credenciais da versão de desenvolvimento não são incluídas no instalador.
+
+Os envios reais precisam de internet e de contas configuradas nos provedores.
+A placa precisa estar programada para o Wi-Fi. O driver USB é usado apenas
+para gravar o firmware, sem necessidade de cabo de dados durante o uso.
+O modo Demonstração não envia mensagens externas.
+
+WHATSAPP LOCAL / WPPCONNECT
+Em Serviços de envio, selecione WPPConnect e clique em Conectar WhatsApp.
+No celular, abra WhatsApp > Aparelhos conectados > Conectar um aparelho.
+Escaneie o QR Code no ClimaGuard. Isso conecta sua conta a este notebook.
+Depois, em Meus alertas, salve o telefone autorizado e teste o WhatsApp.
+Não há mensalidade de API; o notebook precisa ficar ligado e com internet.
+A integração não é oficial da Meta e pode sofrer bloqueios ou desconexões.
+Prefira um número do projeto. Para revogar a sessão, use Aparelhos conectados.
+Microsoft Edge ou Google Chrome precisa estar instalado no notebook.
+
+Este pacote é uma compilação local do projeto, sem assinatura digital própria.
+
+CONEXAO DA PLACA
+Firmware 1.3 ou superior: busca automática em Ethernet e Wi-Fi.
+O indicador no alto mostra comunicação real com a placa.
+Procurar placa repete a busca; Conectar pelo IP é uma alternativa.
+Cada computador pode acompanhar a mesma placa sem compartilhar tokens.
+
+TROCAR O WI-FI SEM REGRAVAR
+No menu Wi-Fi da placa, escolha a porta USB e salve a nova rede ou
+leia o cartao com QR Code. Guarde uma foto do cartao no celular.
+Sem cabo: com a placa ja ligada, segure FLASH por 3 segundos e solte.
+Conecte ao Wi-Fi ClimaGuard da placa com a senha do cartao.
+Abra http://192.168.4.1 e escolha a nova rede de 2,4 GHz.
+Se a placa nao conectar ao Wi-Fi, a rede de configuracao abre apos 30 s.
+As credenciais ficam salvas na placa e sobrevivem ao desligamento.
+Se a nova rede falhar, a configuracao anterior e mantida.
+
+RESPOSTA MAIS RAPIDA (FIRMWARE 1.5)
+Temperatura e umidade: nova medicao a cada 2,1 segundos.
+ZMPT101B: publica a deteccao apos confirmar janelas do sinal AC.
+Consulta da placa: 200 ms. Atualizacao da tela: 250 ms.
+Novos alertas acordam a fila de envio sem espera periodica.
+A entrega de mensagens depende da internet e do servico utilizado.
+
+CLIMAGUARD NO IPHONE
+Abra No iPhone no aplicativo para preparar acesso privado com Tailscale,
+autorizar cada aparelho e adicionar o icone pelo Safari. Funciona tambem
+fora de casa, com 4G/5G, mantendo o computador ligado com internet.
+O Tailscale deve estar instalado e conectado na mesma conta em todos
+os aparelhos. Sua instalacao e entrada na conta sao feitas pelo usuario.
+No celular: painel, grafico e avisos. Regras e envios continuam no PC.
+
+ESP32 DEVKIT V1 E ZMPT101B
+DHT22 no GPIO4; ZMPT101B no GPIO34/ADC1 com interface analogica adequada.
+Energia nao verificada e diferente de energia ausente. Sensor desativado nao gera falta de energia.
+Use Sensor de energia ZMPT101B no painel para ver como calibrar no portal da placa.
+Firmware da linha 1.5 e comunicacao local por Wi-Fi sao preservados.
+Consulte docs/ESP32-DEVKIT-ZMPT.md antes de ligar o sensor AC.
+
+
+
+GUIA PARA O PRIMEIRO USO
+https://github.com/ClimaGuard-Equipe/ClimaGuard/blob/main/docs/GUIA-DO-USUARIO.md

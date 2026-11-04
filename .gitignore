@@ -21,4 +21,29 @@ correcao-*.txt
 *.zip
 .DS_Store
 Thumbs.db
+work/
+dist/
+node_modules/
+whatsapp-session/
+.wifi-setup-cards.json
+.mobile-devices.json
+.mobile-devices.tmp
+android/.gradle/
+android/local.properties
+android/**/build/
+*.jks
+*.keystore
 
+
+# Local state, sessions and distribution artifacts
+device-network.json
+device-network.tmp
+.wifi-setup-cards.tmp
+*.dpapi
+*.exe
+*.apk
+*.pdb
+build/
+WebView/
+tokens/
+userDataDir/

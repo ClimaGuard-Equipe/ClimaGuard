@@ -17,6 +17,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from providers import Providers, deliver_one
 from storage import DEFAULT_PREFERENCES, Store, validate_reading
+from whatsapp_local import WhatsAppLocal
+from device_network import DeviceNetwork
+from wifi_provision import WifiProvision
+from mobile import MobileCompanion
+from mobile_remote import MobileRemote
 
 ROOT = Path(__file__).resolve().parent
 EMAIL = re.compile(r'[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+')
@@ -43,8 +48,15 @@ def create_app(data_dir=None, worker=True, transport=None):
                       PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
     device_token = secret('.device-token')
     store = Store(data_dir / 'climaguard.sqlite3')
-    providers = Providers(data_dir / '.providers.json', transport)
-    app.extensions.update(climaguard_store=store, climaguard_providers=providers)
+    whatsapp_local = WhatsAppLocal(data_dir)
+    providers = Providers(data_dir / '.providers.json', transport, whatsapp_local)
+    network = DeviceNetwork(data_dir, lambda reading: store.add_reading(reading, 'real', 0, providers))
+    wifi_provision = WifiProvision(data_dir)
+    mobile_remote = MobileRemote()
+    mobile = MobileCompanion(data_dir, store, network, mobile_remote)
+    app.extensions.update(climaguard_store=store, climaguard_providers=providers,
+                          climaguard_whatsapp=whatsapp_local, climaguard_network=network,
+                          climaguard_wifi_provision=wifi_provision, climaguard_mobile=mobile)
     attempts, attempts_lock = {}, threading.Lock()
 
     # Migrate old real readings without evaluating notifications for old data.
@@ -248,7 +260,90 @@ def create_app(data_dir=None, worker=True, transport=None):
             return jsonify(error='Modo inválido.'), 400
         result = store.snapshot(g.user['id'], source)
         result.update(preferences=store.preferences(g.user['id']), providers=providers.summary())
+        result['connection'] = network.snapshot()
+        if result['connection']['selected']:
+            result['device_online'] = result['connection']['online']
+            if source == 'real':
+                result['online'] = result['online'] and result['connection']['online']
         return jsonify(result)
+
+    @app.post('/api/device/network')
+    @logged_in
+    def device_network():
+        try:
+            data = body()
+            action = data.get('action', 'scan')
+            if action == 'scan':
+                if limited('device-search', limit=20, window=60):
+                    return jsonify(error='Aguarde alguns segundos antes de procurar novamente.'), 429
+                network.request_scan()
+            elif action in ('connect', 'select'):
+                if not g.user['admin']:
+                    return jsonify(error='Somente o administrador pode escolher a placa.'), 403
+                if action == 'connect':
+                    network.connect_address(data.get('ip'))
+                else:
+                    network.select_device(data.get('id'))
+            else:
+                raise ValueError('Ação de conexão inválida.')
+            return jsonify(ok=True, connection=network.snapshot())
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
+
+    @app.route('/api/device/wifi/usb', methods=['GET','POST'])
+    @logged_in
+    def device_wifi_usb():
+        # Physical USB setup is available to every local signed-in user.
+        # The private setup-network card stays on the administrator endpoint.
+        try:
+            if request.method == 'GET':
+                return jsonify(ports=[{'device': p.device, 'description': getattr(p, 'description', None) or 'USB serial'}
+                                      for p in wifi_provision.ports()])
+            if limited(('wifi-provision',g.user['id']),limit=8,window=60):
+                return jsonify(error='Aguarde um minuto antes de tentar novamente.'), 429
+            data = body()
+            selected = network.snapshot()['selected']
+            if data.get('action') == 'identify':
+                card = wifi_provision.capture_card(selected, port=data.get('port'))
+                return jsonify(ok=True, id=card['id'])
+            if data.get('action') == 'save':
+                result = wifi_provision.configure(data.get('ssid'),data.get('password'),selected,port=data.get('port'))
+                network.request_scan()
+                return jsonify(result)
+            raise ValueError('Ação de configuração USB inválida.')
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
+
+    @app.route('/api/device/wifi', methods=['GET','POST'])
+    @logged_in
+    def device_wifi():
+        if not g.user['admin']:
+            return jsonify(error='Somente o administrador pode configurar o Wi-Fi da placa.'), 403
+        selected = network.snapshot()['selected']
+        try:
+            if request.method == 'POST':
+                if limited(('wifi-provision',g.user['id']),limit=8,window=60):
+                    return jsonify(error='Aguarde um minuto antes de tentar novamente.'), 429
+                data = body()
+                action = data.get('action')
+                port = data.get('port')
+                if action == 'capture':
+                    card = wifi_provision.capture_card(selected, port=port)
+                    return jsonify(card=card)
+                elif action == 'portal':
+                    card = wifi_provision.open_portal(selected, port=port)
+                    return jsonify(card=card)
+                elif action == 'save':
+                    result = wifi_provision.configure(data.get('ssid'),data.get('password'),selected,port=port)
+                    network.request_scan()
+                    return jsonify(result)
+                else:
+                    raise ValueError('Ação de configuração inválida.')
+            ports = [{'device': p.device, 'description': getattr(p, 'description', None) or 'USB serial'}
+                     for p in wifi_provision.ports()]
+            return jsonify(card=wifi_provision.card(selected),usb_available=bool(ports),ports=ports)
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
 
     @app.post('/api/readings')
     def ingest():
@@ -276,6 +371,47 @@ def create_app(data_dir=None, worker=True, transport=None):
     def alert_history():
         return jsonify(alerts=store.alert_history(g.user['id']))
 
+    @app.route('/api/mobile/access', methods=['GET', 'POST'])
+    @logged_in
+    def mobile_access():
+        if request.method == 'POST':
+            if limited(('mobile-access', g.user['id']), 12, 60):
+                return jsonify(error='Aguarde um minuto antes de gerar mais códigos.'), 429
+            try:
+                data = body()
+                if data.get('action') == 'pair':
+                    return jsonify(pairing=mobile.issue(g.user['id']))
+                if data.get('action') == 'revoke':
+                    mobile.revoke(g.user['id'], data.get('id'))
+                elif data.get('action') == 'remote':
+                    if not g.user['admin']:
+                        return jsonify(error='O administrador precisa preparar o Tailscale neste computador.'), 403
+                    return jsonify(remote=mobile_remote.enable())
+                else:
+                    raise ValueError('Operação de acesso inválida.')
+            except (ValueError, OSError) as error:
+                return jsonify(error=str(error) if isinstance(error, ValueError) else 'Não foi possível atualizar o acesso. Confira o espaço em disco.'), 400
+        return jsonify(access=mobile.access(g.user['id']))
+
+    @app.post('/api/alerts/<int:job_id>/delivery')
+    @logged_in
+    def whatsapp_delivery(job_id):
+        with store.connect() as db:
+            row = db.execute('SELECT * FROM alerts WHERE id=? AND user_id=?', (job_id, g.user['id'])).fetchone()
+        if not row:
+            return jsonify(error='Aviso não encontrado.'), 404
+        job = dict(row)
+        if job['source'] == 'demo' or job['channel'] != 'whatsapp' or not job['provider_id']:
+            return jsonify(error='Este aviso não tem um envio WhatsApp para consultar.'), 400
+        if limited(('delivery', g.user['id']), 10, 60):
+            return jsonify(error='Aguarde um minuto antes de consultar mais entregas.'), 429
+        try:
+            status, detail = providers.whatsapp_delivery(job)
+            store.finish_job(job_id, status, detail, job['provider_id'])
+            return jsonify(ok=True, status=status, detail=detail)
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
+
     @app.post('/api/test-message')
     @logged_in
     def test_message():
@@ -287,14 +423,18 @@ def create_app(data_dir=None, worker=True, transport=None):
             prefs = store.preferences(g.user['id'])
             if not prefs['enabled'] or not prefs['consent'] or channel not in prefs['channels']:
                 raise ValueError('Salve as preferências com alertas, canal e autorização de envio ativados.')
-            if not providers.live_enabled() or not providers.ready(channel):
-                raise ValueError('O administrador precisa configurar e ativar os envios reais deste canal.')
+            if not providers.live_enabled():
+                raise ValueError('O administrador precisa ativar os envios reais em Serviços de envio.')
+            problem = providers.configuration_error(channel)
+            if problem:
+                raise ValueError(problem)
             if limited(('test', g.user['id']), 3, 300):
                 return jsonify(error='Aguarde cinco minutos antes de enviar mais testes.'), 429
             now = time.time()
             with store.connect() as db:
                 job_id = store.queue(db, g.user['id'], 'test', 'test', channel, prefs,
                                      'ClimaGuard: este é um teste de envio solicitado pelo usuário. Nenhuma ocorrência real foi detectada.', providers, now)
+            store.jobs_ready.set()
             return jsonify(ok=True, id=job_id), 202
         except ValueError as error:
             return jsonify(error=str(error)), 400
@@ -313,12 +453,36 @@ def create_app(data_dir=None, worker=True, transport=None):
                 return jsonify(error=str(error)), 400
         return jsonify(providers=providers.summary(admin=True))
 
+    @app.route('/api/whatsapp/local', methods=['GET', 'POST'])
+    @logged_in
+    def local_whatsapp():
+        if not g.user['admin']:
+            return jsonify(error='Somente o administrador pode conectar o WhatsApp.'), 403
+        if request.method == 'POST':
+            data = body()
+            action = data.get('action')
+            if action not in ('connect', 'close'):
+                return jsonify(error='Operação WhatsApp inválida.'), 400
+            if limited(('whatsapp-connect', g.user['id']), 10, 60):
+                return jsonify(error='Aguarde um minuto antes de tentar conectar novamente.'), 429
+            try:
+                if action == 'connect':
+                    whatsapp_local.start()
+                    providers.save({'WHATSAPP_PROVIDER': 'wppconnect', 'live_enabled': providers.live_enabled()})
+                else:
+                    whatsapp_local.close()
+            except ValueError as error:
+                return jsonify(error=str(error)), 400
+        return jsonify(connection=whatsapp_local.status(qr=True), providers=providers.summary())
+
     if worker:
+        network.start()
         def process_jobs():
             while True:
+                store.jobs_ready.clear()
                 try:
                     if not deliver_one(store, providers):
-                        time.sleep(2)
+                        store.jobs_ready.wait(2)
                 except Exception:
                     app.logger.error('Falha temporária no processamento da fila de alertas.')
                     time.sleep(2)

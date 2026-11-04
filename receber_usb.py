@@ -1,6 +1,7 @@
 """Forward fresh physical ESP readings to the local portal over USB."""
 import json
 import math
+import os
 from pathlib import Path
 import time
 import urllib.request
@@ -27,23 +28,24 @@ def physical_reading(line):
         return None
 
 
-def main():
+def main(data_dir=None, server_url='http://127.0.0.1:5000', stop_event=None):
+    data_dir = Path(data_dir or os.environ.get('CLIMAGUARD_DATA_DIR', str(ROOT)))
     ports = [p.device for p in list_ports.comports() if 'CH340' in p.description.upper() or (p.vid == 0x1A86 and p.pid == 0x7523)]
     if len(ports) != 1:
         raise RuntimeError('Conecte somente a placa ClimaGuard por USB. Nenhuma porta unica CH340 foi encontrada.')
-    token = (ROOT / '.device-token').read_text(encoding='utf-8').strip()
+    token = (data_dir / '.device-token').read_text(encoding='utf-8').strip()
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    log = ROOT / 'recebimento-usb.log'
+    log = data_dir / 'recebimento-usb.log'
     print('ClimaGuard: recebimento REAL por USB em', ports[0], flush=True)
     print('Mantenha esta janela e o servidor abertos. Feche antes de gravar codigo pelo Arduino.', flush=True)
     with serial.Serial(ports[0], 115200, timeout=2) as connection:
         connection.reset_input_buffer()
-        while True:
+        while stop_event is None or not stop_event.is_set():
             line = connection.readline().decode('utf-8', errors='replace').strip()
             reading = physical_reading(line)
             if reading is None:
                 continue
-            request = urllib.request.Request('http://127.0.0.1:5000/api/readings',
+            request = urllib.request.Request(server_url.rstrip('/') + '/api/readings',
                 data=json.dumps(reading).encode(), headers={'Content-Type': 'application/json', 'X-Device-Token': token}, method='POST')
             try:
                 with opener.open(request, timeout=4) as response:

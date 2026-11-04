@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#123c35"><meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="ClimaGuard">
+ <title>ClimaGuard</title><link rel="manifest" href="/manifest.webmanifest">
+ <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
+ <link rel="icon" href="/assets/icon-192.png"><link rel="stylesheet" href="/assets/mobile.css?v=1">
+ <script type="module" src="/assets/mobile.js?v=1"></script>
+</head>
+<body>
+ <header class="masthead"><a class="brand" href="/" aria-label="ClimaGuard início"><img src="/assets/icon-192.png" width="40" height="40" alt="">ClimaGuard</a><span class="edition">NO SEU IPHONE</span></header>
+ <main>
+  <section id="boot" class="message"><span class="eyebrow">SEU AMBIENTE, POR PERTO</span><h1>Conectando ao seu computador…</h1><p>Consultando o ClimaGuard pela sua conexão privada.</p></section>
+  <section id="pairing" hidden>
+   <div class="intro"><span class="eyebrow">BEM-VINDO AO CLIMAGUARD</span><h1>Seu ambiente.<br>Onde você estiver.</h1><p>Temperatura, umidade e seus avisos, direto do computador para o seu iPhone.</p></div>
+   <article class="card"><h2>Autorize este iPhone</h2><p>No computador, abra <strong>No iPhone</strong> e gere um código. Cada iPhone usa um código novo.</p>
+    <form id="pair-form"><label>Nome deste aparelho<input id="device-name" maxlength="60" value="Meu iPhone" autocomplete="off" required></label><label>Código do computador<input id="pair-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" minlength="8" maxlength="8" placeholder="00000000" required></label><p id="pair-error" class="error" role="alert"></p><button id="pair-button" class="primary">Autorizar este iPhone <span aria-hidden="true">↗</span></button></form>
+   </article>
+   <article class="install-note"><strong>Um ícone só seu.</strong><p>No Safari, toque em Compartilhar → Adicionar à Tela de Início. Ative <strong>Abrir como App da Web</strong>, se aparecer. Se o ícone pedir autorização novamente, gere outro código no computador.</p></article>
+   <p class="footnote">Mantenha o Tailscale conectado no iPhone e no computador. O computador deve estar ligado com o ClimaGuard aberto.</p>
+  </section>
+  <div id="app" hidden>
+   <section id="view-overview" class="view">
+    <div class="greeting"><span class="eyebrow">VISÃO GERAL</span><h1>Seu ambiente,<br>sob controle.</h1></div>
+    <div id="connection" class="connection pending" role="status"><span class="dot"></span><div><strong id="connection-label">Conectando…</strong><small id="connection-detail">Consultando a placa pelo computador</small></div><button id="refresh" aria-label="Atualizar leituras" title="Atualizar">↻</button></div>
+    <article class="temperature-card"><div class="metric-heading"><span>TEMPERATURA</span><span class="sensor-mark" aria-hidden="true">°</span></div><div id="temperature" class="temperature">—</div><p id="temperature-note">Aguardando uma leitura recente</p><div class="temperature-foot"><span id="threshold">Seu limite de alerta</span><span class="live-label"><span class="dot"></span> PLACA REAL</span></div></article>
+    <div class="metric-grid"><article class="card mini"><span class="metric-caption">UMIDADE</span><div id="humidity" class="small-value">—</div><p>Umidade relativa do ar</p></article><article class="card mini"><span class="metric-caption">ENERGIA SIMULADA</span><div id="energy" class="small-value energy">—</div><p>Estado da chave na placa</p></article></div>
+    <article class="card chart-card"><div class="card-heading"><h2>Últimas leituras</h2><span>°C</span></div><canvas id="chart" aria-label="Gráfico das temperaturas recentes" role="img"></canvas><p id="chart-caption" class="subtle">Aguardando dados reais.</p></article>
+    <div class="last-reading"><span class="dot"></span><span id="last-reading">Aguardando leitura</span></div>
+   </section>
+   <section id="view-alerts" class="view" hidden><div class="greeting"><span class="eyebrow">SEUS AVISOS</span><h1>Cada aviso,<br>no seu tempo.</h1><p>Acompanhe os envios registrados no seu computador.</p></div><article class="card rule-card"><span class="eyebrow">REGRAS NO COMPUTADOR</span><h2 id="rules-title">Consultando suas regras…</h2><p id="rules-detail"></p><p class="subtle">Destinatários, limites e serviços de envio são configurados no ClimaGuard do computador.</p></article><div id="alerts"></div></section>
+   <section id="view-access" class="view" hidden><div class="greeting"><span class="eyebrow">SEU ACESSO</span><h1>ClimaGuard,<br>sempre por perto.</h1></div><article class="card"><span class="eyebrow">ESTE APARELHO</span><h2 id="phone-name">Meu iPhone</h2><p>Este aparelho está autorizado a acompanhar as leituras e os avisos da sua conta. A autorização vale por 30 dias e pode ser removida no computador.</p><button id="logout" class="secondary danger">Desconectar este iPhone</button></article><article class="card instructions"><h2>Adicionar à Tela de Início</h2><ol><li>Abra este endereço no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar</strong> e em <strong>Adicionar à Tela de Início</strong>.</li><li>Ative <strong>Abrir como App da Web</strong>, se aparecer, e toque em <strong>Adicionar</strong>.</li></ol><p class="subtle">Se o ícone pedir um código, gere outro em No iPhone, no computador. O código é usado uma única vez.</p></article><article class="install-note"><strong>Também pelo 4G e 5G.</strong><p>Deixe o Tailscale conectado nos aparelhos. O computador recebe as leituras da placa e realiza os envios. Ele precisa ficar ligado, sem suspensão, com o ClimaGuard aberto e acesso à internet.</p><p>A tela acompanha os dados enquanto estiver aberta. Os avisos chegam pelos canais configurados no computador.</p></article></section>
+   <footer class="footer">ClimaGuard · Seu espaço de controle</footer>
+   <nav class="tabbar" aria-label="Navegação principal"><button data-view="overview" class="active" aria-current="page"><span aria-hidden="true">◫</span>Ambiente</button><button data-view="alerts"><span aria-hidden="true">♧</span>Avisos</button><button data-view="access"><span aria-hidden="true">⌘</span>Meu acesso</button></nav>
+  </div>
+ </main>
+ <p id="notice" class="toast" role="status" hidden></p>
+</body>
+</html>

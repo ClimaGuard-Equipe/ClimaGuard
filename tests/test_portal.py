@@ -82,6 +82,27 @@ class PortalTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertNotEqual(result.json['csrf_token'], self.csrf)
 
+    def test_device_search_requires_login_csrf_and_remains_local(self):
+        self.assertEqual(self.client.post('/api/device/network', json={'action':'scan'}).status_code,403)
+        anonymous = self.app.test_client()
+        token = anonymous.get('/api/session').json['csrf_token']
+        self.assertEqual(anonymous.post('/api/device/network',json={'action':'scan'},headers={'X-CSRF-Token':token}).status_code,401)
+        self.assertEqual(self.client.post('/api/device/network',json={'action':'scan'},headers={'X-CSRF-Token':self.csrf},
+                                         environ_overrides={'REMOTE_ADDR':'192.168.1.50'}).status_code,403)
+        with patch.object(self.app.extensions['climaguard_network'],'request_scan') as scan:
+            self.assertEqual(self.post('/api/device/network',{'action':'scan'}).status_code,200)
+            scan.assert_called_once()
+        self.assertEqual(self.post('/api/device/network',{'action':'connect','ip':'8.8.8.8'}).status_code,400)
+
+    def test_device_selection_requires_administrator_and_demo_does_not_mark_board_online(self):
+        self.post('/api/demo',self.reading())
+        snapshot = self.client.get('/api/status?source=demo').json
+        self.assertTrue(snapshot['online'])
+        self.assertFalse(snapshot['connection']['online'])
+        with self.store.connect() as db:
+            db.execute('UPDATE users SET admin=0 WHERE id=?',(self.user_id,))
+        self.assertEqual(self.post('/api/device/network',{'action':'select','id':'cg-0123456789ab'}).status_code,403)
+
     def test_preferences_persist_and_validate(self):
         self.preferences(threshold=32.5, channels=['sms'], phone='+15555550123')
         self.assertEqual(self.client.get('/api/preferences').json['preferences']['threshold'], 32.5)
@@ -116,6 +137,30 @@ class PortalTests(unittest.TestCase):
         self.assertIs(latest['temperature'], None)
         self.assertIs(latest['energy'], False)
         self.assertIsNone(self.client.get('/api/status?source=real').json['latest'])
+
+    def test_zmpt_unavailable_does_not_trigger_or_rearm_power_alert(self):
+        self.preferences(temperature_enabled=False)
+        self.store.add_reading(self.reading(28, None), 'real', 0, self.providers)
+        self.assertEqual(self.history(), [])
+        self.store.add_reading(self.reading(28, False), 'real', 0, self.providers)
+        self.assertEqual(len(self.history()), 1)
+        self.assertIn('sensor da placa', self.history()[0]['message'])
+        self.assertNotIn('D5', self.history()[0]['message'])
+        self.store.add_reading(self.reading(28, None), 'real', 0, self.providers)
+        with self.store.connect() as db:
+            row = db.execute("SELECT active FROM rule_state WHERE source='real' AND kind='power'").fetchone()
+        self.assertEqual(row['active'], 1)
+
+    def test_zmpt_can_report_all_sensors_unavailable_without_false_measurements(self):
+        raw = dict(temperature=None, humidity=None, energy=None,
+                   power={'type': 'ZMPT101B', 'valid': False, 'state': 'disabled'})
+        self.assertEqual(validate_reading(raw), dict(temperature=None, humidity=None, energy=None))
+        raw['power']['valid'] = True
+        with self.assertRaises(ValueError):
+            validate_reading(raw)
+        raw.pop('power')
+        with self.assertRaises(ValueError):
+            validate_reading(raw)
 
     def test_user_data_isolation_and_admin(self):
         self.preferences()
@@ -271,7 +316,8 @@ class PortalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'ContentSid'):
             self.providers.send(job)
         self.assertEqual(self.calls, [])
-        self.providers.save({'TWILIO_WHATSAPP_CONTENT_SID': 'HX'+'0'*32, 'live_enabled': True})
+        self.providers.save({'TWILIO_WHATSAPP_CONTENT_SID': 'HX'+'0'*32,
+                             'TWILIO_WHATSAPP_CONTENT_VARIABLES': '{"1":"{message}"}', 'live_enabled': True})
         self.assertTrue(self.providers.summary()['ready']['whatsapp'])
         self.providers.send(job)
         body = parse_qs(self.calls[-1].data.decode())
@@ -279,6 +325,179 @@ class PortalTests(unittest.TestCase):
         self.assertNotIn('ContentVariables', body)
         self.assertNotIn('Body', body)
 
+    def configure_whatsapp(self, **updates):
+        data = {'TWILIO_ACCOUNT_SID': 'AC'+'0'*32, 'TWILIO_AUTH_TOKEN': 'test-only-token',
+                'TWILIO_WHATSAPP_FROM': 'whatsapp:+15555550124', 'live_enabled': True}
+        data.update(updates)
+        self.providers.save(data)
+        return {'id': 1, 'created': time.time(), 'channel': 'whatsapp', 'destination': '+15555550123',
+                'message': 'ClimaGuard: temperatura de 35.0 °C acima do limite de 30 °C.', 'kind': 'temperature'}
+
+    def test_whatsapp_custom_template_maps_multiple_variables_and_unicode(self):
+        job = self.configure_whatsapp(TWILIO_WHATSAPP_CONTENT_SID='HX'+'0'*32,
+                                     TWILIO_WHATSAPP_CONTENT_VARIABLES='{"1":"Laboratório","2":"{message}"}')
+        self.providers.send(job)
+        body = parse_qs(self.calls[-1].data.decode())
+        self.assertEqual(body['From'], ['whatsapp:+15555550124'])
+        self.assertEqual(body['To'], ['whatsapp:+15555550123'])
+        self.assertEqual(json.loads(body['ContentVariables'][0]), {'1': 'Laboratório', '2': job['message']})
+        self.assertNotIn('Body', body)
+
+    def test_whatsapp_can_clear_saved_template_and_send_sensor_text(self):
+        job = self.configure_whatsapp(TWILIO_WHATSAPP_CONTENT_SID='HX'+'0'*32)
+        response = self.post('/api/providers', {'TWILIO_WHATSAPP_CONTENT_SID': '',
+                                             'TWILIO_WHATSAPP_CONTENT_VARIABLES': '', 'live_enabled': True})
+        self.assertEqual(response.status_code, 200)
+        saved = json.loads((Path(self.directory.name)/'.providers.json').read_text())
+        self.assertEqual(saved['TWILIO_WHATSAPP_CONTENT_SID'], '')
+        self.assertEqual(saved['TWILIO_AUTH_TOKEN'], 'test-only-token')
+        self.providers.send(job)
+        body = parse_qs(self.calls[-1].data.decode())
+        self.assertEqual(body['Body'], [job['message']])
+        self.assertNotIn('ContentSid', body)
+        self.assertNotIn('ContentVariables', body)
+
+    def test_whatsapp_fixed_template_can_test_but_cannot_report_sensor_data(self):
+        job = self.configure_whatsapp(TWILIO_WHATSAPP_CONTENT_SID='HX'+'0'*32,
+                                     TWILIO_WHATSAPP_CONTENT_VARIABLES='{}')
+        with self.assertRaisesRegex(ValueError, 'alerta real'):
+            self.providers.send(job)
+        self.assertEqual(self.calls, [])
+        job['kind'] = 'test'
+        self.providers.send(job)
+        body = parse_qs(self.calls[-1].data.decode())
+        self.assertIn('ContentSid', body)
+        self.assertNotIn('ContentVariables', body)
+
+    def test_whatsapp_rejects_invalid_template_variables_before_saving(self):
+        self.configure_whatsapp()
+        for value in ('not-json', '[]', '{"1":null}', '{"1":""}', '{"1":12}',
+                      '{"bad key":"test"}', '{"1":"line\\nbreak"}', '{"1":"five     spaces"}'):
+            with self.subTest(value=value):
+                response = self.post('/api/providers', {'TWILIO_WHATSAPP_CONTENT_VARIABLES': value, 'live_enabled': True})
+                self.assertEqual(response.status_code, 400)
+                self.assertNotIn('TWILIO_WHATSAPP_CONTENT_VARIABLES', self.providers.values)
+        self.assertEqual(self.calls, [])
+
+    def test_whatsapp_trial_missing_template_reports_specific_setup_step(self):
+        self.configure_whatsapp(TWILIO_MODE='trial')
+        self.preferences(channels=['whatsapp'], phone='+15555550123', consent=True)
+        response = self.post('/api/test-message', {'channel': 'whatsapp', 'confirm': True})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('ContentSid', response.json['error'])
+        self.assertEqual(self.calls, [])
+
+    def test_whatsapp_failures_explain_sender_join_and_window_without_secrets(self):
+        job = self.configure_whatsapp()
+        for code, expected in ((63007, 'remetente'), (63015, 'join'), (63016, '24 horas')):
+            with self.subTest(code=code):
+                def rejected(req, timeout):
+                    data = {'code': code, 'message': 'Rejected test-only-token AC'+'0'*32}
+                    raise HTTPError(req.full_url, 400, 'Bad Request', {}, io.BytesIO(json.dumps(data).encode()))
+                self.providers.transport = rejected
+                with self.assertRaises(ValueError) as raised:
+                    self.providers.send(job)
+                detail = str(raised.exception)
+                self.assertIn(str(code), detail)
+                self.assertIn(expected, detail)
+                self.assertNotIn('test-only-token', detail)
+                self.assertNotIn('AC'+'0'*32, detail)
+
+    def accepted_whatsapp(self):
+        self.configure_whatsapp()
+        self.preferences(channels=['whatsapp'], phone='+15555550123', consent=True)
+        response = self.post('/api/test-message', {'channel': 'whatsapp', 'confirm': True})
+        with patch.object(FakeResponse, 'read', return_value=json.dumps({'sid': 'SM'+'1'*32, 'status': 'queued'}).encode()):
+            self.assertTrue(deliver_one(self.store, self.providers))
+        return response.json['id']
+
+    def test_whatsapp_delivery_query_reports_delivered_and_read_without_resending(self):
+        job_id = self.accepted_whatsapp()
+        self.providers.save({'live_enabled': False})  # Status checks are read-only at Twilio.
+        for status in ('queued', 'sent', 'delivered', 'read'):
+            with self.subTest(status=status):
+                with patch.object(FakeResponse, 'read', return_value=json.dumps({'status': status}).encode()):
+                    response = self.post(f'/api/alerts/{job_id}/delivery', {})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json['status'], status if status in ('delivered', 'read') else 'accepted')
+                self.assertEqual(self.calls[-1].get_method(), 'GET')
+                self.assertTrue(self.calls[-1].full_url.endswith('/Messages/SM'+'1'*32+'.json'))
+                self.assertIsNone(self.calls[-1].data)
+        self.assertEqual(sum(req.get_method() == 'POST' for req in self.calls), 1)
+        self.assertEqual(self.history()[0]['status'], 'read')
+        self.assertEqual(self.history()[0]['provider_id'], 'SM'+'1'*32)
+
+    def test_whatsapp_delivery_query_detects_failure_after_acceptance(self):
+        job_id = self.accepted_whatsapp()
+        data = {'status': 'undelivered', 'error_code': 63016, 'error_message': 'Outside messaging window'}
+        with patch.object(FakeResponse, 'read', return_value=json.dumps(data).encode()):
+            response = self.post(f'/api/alerts/{job_id}/delivery', {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.history()[0]['status'], 'failed')
+        self.assertIn('63016', self.history()[0]['detail'])
+        self.assertIn('24 horas', self.history()[0]['detail'])
+        self.assertEqual(self.history()[0]['provider_id'], 'SM'+'1'*32)
+        self.assertFalse(deliver_one(self.store, self.providers))
+
+    def test_whatsapp_query_network_failure_preserves_existing_delivery_state(self):
+        job_id = self.accepted_whatsapp()
+        with patch.object(self.providers, 'transport', side_effect=TimeoutError):
+            response = self.post(f'/api/alerts/{job_id}/delivery', {})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.history()[0]['status'], 'accepted')
+        self.assertEqual(self.history()[0]['provider_id'], 'SM'+'1'*32)
+        self.assertFalse(deliver_one(self.store, self.providers))
+
+    def test_whatsapp_immediate_failure_is_not_marked_as_accepted(self):
+        self.configure_whatsapp()
+        self.preferences(channels=['whatsapp'], phone='+15555550123', consent=True)
+        self.post('/api/test-message', {'channel': 'whatsapp', 'confirm': True})
+        data = {'sid': 'SM'+'1'*32, 'status': 'failed', 'error_code': 63015, 'error_message': 'Join required'}
+        with patch.object(FakeResponse, 'read', return_value=json.dumps(data).encode()):
+            self.assertTrue(deliver_one(self.store, self.providers))
+        self.assertEqual(self.history()[0]['status'], 'failed')
+        self.assertIn('join', self.history()[0]['detail'])
+
+    def test_whatsapp_delivery_query_requires_owner_and_csrf(self):
+        job_id = self.accepted_whatsapp()
+        count = len(self.calls)
+        self.assertEqual(self.client.post(f'/api/alerts/{job_id}/delivery', json={}).status_code, 403)
+        other = self.app.test_client()
+        token = other.get('/api/session').json['csrf_token']
+        created = other.post('/api/register', json={'name': 'Outro teste', 'email': 'other@example.test',
+                             'password': 'other-test-password'}, headers={'X-CSRF-Token': token}).json
+        response = other.post(f'/api/alerts/{job_id}/delivery', json={}, headers={'X-CSRF-Token': created['csrf_token']})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(len(self.calls), count)
+
+    def test_whatsapp_does_not_consult_delivery_of_simulations(self):
+        self.preferences(channels=['whatsapp'], phone='+15555550123')
+        self.post('/api/demo', self.reading(35))
+        response = self.post(f"/api/alerts/{self.history()[0]['id']}/delivery", {})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.calls, [])
+
+
+    def test_local_pairing_is_admin_only_and_requires_csrf(self):
+        with patch.object(self.app.extensions['climaguard_whatsapp'], 'status', return_value={'state':'qr','qr':'data:image/png;base64,cXI=','detail':'Escaneie'}) as status:
+            self.assertEqual(self.client.post('/api/whatsapp/local', json={'action':'connect'}).status_code, 403)
+            self.assertEqual(self.client.get('/api/whatsapp/local').json['connection']['state'], 'qr')
+            self.assertNotIn('qr', json.dumps(self.client.get('/api/preferences').json))
+            with self.client.session_transaction() as session:
+                user_id = session['user_id']
+            with self.store.connect() as db:
+                db.execute('UPDATE users SET admin=0 WHERE id=?', (user_id,))
+            self.assertEqual(self.client.get('/api/whatsapp/local').status_code, 403)
+            self.assertEqual(self.post('/api/whatsapp/local', {'action':'connect'}).status_code, 403)
+
+    def test_local_pairing_saves_provider_without_sending(self):
+        local = self.app.extensions['climaguard_whatsapp']
+        with patch.object(local, 'start') as start, patch.object(local, 'status', return_value={'state':'starting','detail':'Aguarde'}):
+            result = self.post('/api/whatsapp/local', {'action':'connect'})
+            self.assertEqual(result.status_code, 200)
+            start.assert_called_once()
+            self.assertEqual(self.providers.config()['WHATSAPP_PROVIDER'], 'wppconnect')
+            self.assertEqual(self.calls, [])
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,5 +10,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare local bridge test runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path work/whatsapp-runtime -Force | Out-Null
+          Copy-Item -LiteralPath (Get-Command node).Source -Destination work/whatsapp-runtime/node.exe
       - run: python -m pip install -r requirements.txt
+      - name: Check public files and documentation links
+        run: python packaging/check_publication.py
       - run: python -m unittest discover -s tests -v

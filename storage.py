@@ -2,6 +2,7 @@
 import json
 import math
 import sqlite3
+import threading
 import time
 from contextlib import contextmanager
 
@@ -15,6 +16,7 @@ DEFAULT_PREFERENCES = {
 class Store:
     def __init__(self, path):
         self.path = str(path)
+        self.jobs_ready = threading.Event()
         with self.connect() as db:
             db.executescript('''
                 PRAGMA journal_mode=WAL;
@@ -86,6 +88,8 @@ class Store:
                 users = [{'id': user_id}]
             for user in users:
                 self.evaluate(db, user['id'], row, source, now, provider)
+        # Wake delivery only after the reading and any alerts have committed.
+        self.jobs_ready.set()
         return {**row, 'received_at': now, 'source': source}
 
     def evaluate(self, db, user_id, row, source, now, provider):
@@ -106,7 +110,8 @@ class Store:
                 message = f"ClimaGuard: temperatura de {value:.1f} °C acima do limite de {prefs['threshold']:g} °C."
             else:
                 trigger, recovered = value is False, value is True
-                message = 'ClimaGuard: falta de energia simulada detectada pela chave em D5.'
+                message = ('ClimaGuard: falta de energia simulada na demonstracao.' if source == 'demo'
+                           else 'ClimaGuard: ausencia de energia AC detectada pelo sensor da placa.')
             should_notify = trigger and not active and now - last_sent >= prefs['cooldown_minutes'] * 60
             if trigger:
                 active = True
@@ -127,7 +132,7 @@ class Store:
         elif not provider.live_enabled():
             status, detail = 'blocked', 'Envios reais desativados pelo administrador.'
         elif not provider.ready(channel):
-            status, detail = 'blocked', 'O serviço deste canal ainda não foi configurado.'
+            status, detail = 'blocked', provider.configuration_error(channel)
         else:
             status, detail = 'queued', 'Aguardando envio ao serviço.'
         cursor = db.execute('INSERT INTO alerts(user_id,source,kind,channel,destination,message,status,detail,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)',
@@ -175,6 +180,11 @@ def validate_reading(data):
     valid = numeric and -40 <= t <= 80 and 0 <= h <= 100
     if energy is not None and type(energy) is not bool:
         raise ValueError('O estado da chave deve ser verdadeiro ou falso.')
-    if not valid and not (t is None and h is None and type(energy) is bool):
+    power = data.get('power')
+    unavailable_zmpt = (isinstance(power, dict) and power.get('type') == 'ZMPT101B'
+                        and power.get('valid') is False and power.get('state') in
+                        ('disabled', 'starting', 'no_signal', 'clipped', 'timing', 'unstable', 'adc_error'))
+    if not valid and not (t is None and h is None and (type(energy) is bool or
+                             (energy is None and unavailable_zmpt))):
         raise ValueError('Temperatura ou umidade inválida.')
     return dict(temperature=t, humidity=h, energy=energy)

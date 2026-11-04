@@ -1,0 +1,13 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(filevers=(1,6,4,0), prodvers=(1,6,4,0), mask=0x3f,
+                   flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0,0)),
+  kids=[StringFileInfo([StringTable('041604B0', [
+    StringStruct('CompanyName', 'Equipe ClimaGuard'),
+    StringStruct('FileDescription', 'ClimaGuard - Monitoramento de temperatura e umidade'),
+    StringStruct('FileVersion', '1.6.4'),
+    StringStruct('InternalName', 'ClimaGuard'),
+    StringStruct('OriginalFilename', 'ClimaGuard.exe'),
+    StringStruct('ProductName', 'ClimaGuard'),
+    StringStruct('ProductVersion', '1.6.4')
+  ])]), VarFileInfo([VarStruct('Translation', [1046,1200])])]
+)

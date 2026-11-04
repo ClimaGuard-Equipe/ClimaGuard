@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'br.com.climaguard.app'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'br.com.climaguard.app'
+        minSdk 26
+        targetSdk 36
+        versionCode 2
+        versionName '1.0.1'
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('CLIMAGUARD_KEYSTORE') ?: '../../local-release.jks')
+            storePassword System.getenv('CLIMAGUARD_STORE_PASSWORD')
+            keyAlias 'climaguard'
+            keyPassword System.getenv('CLIMAGUARD_STORE_PASSWORD')
+        }
+    }
+    buildTypes {
+        release { signingConfig signingConfigs.release; minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250517'
+}
