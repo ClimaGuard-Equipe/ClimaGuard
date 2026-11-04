@@ -44,7 +44,7 @@ class DesktopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'LOCALAPPDATA': directory}, clear=True):
             self.assertEqual(application_data_dir(), Path(directory) / 'ClimaGuard')
             with patch.dict(os.environ, {'CLIMAGUARD_DATA_DIR': str(Path(directory) / 'custom')}):
-                self.assertEqual(application_data_dir(), Path(directory) / 'custom')
+                self.assertEqual(application_data_dir(), (Path(directory) / 'custom').resolve())
 
     def test_desktop_server_serves_assets_and_processes_notification_queue(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
