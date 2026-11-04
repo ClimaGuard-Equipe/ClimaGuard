@@ -1,0 +1,59 @@
+name: Verificar instalador publicado
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag da versão pública a instalar
+        required: true
+        default: v1.6.4
+        type: string
+permissions:
+  contents: read
+jobs:
+  clean-install:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Baixar e conferir o instalador público
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') { throw 'Tag inválida' }
+          New-Item -ItemType Directory -Path download -Force | Out-Null
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern '*.exe' --pattern 'SHA256SUMS.txt' --dir download
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no download' }
+          $version = $env:RELEASE_TAG.Substring(1)
+          $filename = "ClimaGuard-Instalador-$version-x64.exe"
+          $entry = @(Get-Content download/SHA256SUMS.txt | Where-Object { $_.EndsWith("  $filename") })
+          if ($entry.Count -ne 1) { throw 'Manifesto sem entrada única para o instalador' }
+          $expected = ($entry[0] -split '\s+',2)[0]
+          $actual = (Get-FileHash -LiteralPath "download/$filename" -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw 'SHA-256 diferente do manifesto' }
+      - name: Instalar em um Windows limpo e testar o aplicativo instalado
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = $env:RELEASE_TAG.Substring(1)
+          $installer = (Resolve-Path -LiteralPath "download/ClimaGuard-Instalador-$version-x64.exe").Path
+          $log = Join-Path $env:GITHUB_WORKSPACE 'install.log'
+          $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/LOG="'+$log+'"')) -WindowStyle Hidden -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw "Instalador terminou com $($process.ExitCode)" }
+          $app = Join-Path $env:LOCALAPPDATA 'Programs/ClimaGuard/ClimaGuard.exe'
+          if ((Get-Item -LiteralPath $app).VersionInfo.FileVersion -ne $version) { throw 'Versão instalada diferente' }
+          $report = Join-Path $env:GITHUB_WORKSPACE 'installed-self-test.json'
+          $probe = Start-Process -FilePath $app -ArgumentList @('--self-test',('"'+$report+'"')) -WindowStyle Hidden -PassThru
+          if (-not $probe.WaitForExit(60000)) { throw 'Aplicativo instalado não concluiu a verificação' }
+          if ($probe.ExitCode -ne 0) { throw 'Aplicativo instalado falhou' }
+          $result = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+          if (-not $result.ok -or -not $result.frozen -or $result.version -ne $version) { throw 'Relatório inválido' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verificacao-instalador
+          path: |
+            install.log
+            installed-self-test.json
+          if-no-files-found: ignore
