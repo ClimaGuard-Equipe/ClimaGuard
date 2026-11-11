@@ -20,7 +20,7 @@ from portal import ROOT, create_app
 from receber_usb import main as receive_usb
 from network_discovery import ReceiverDiscovery
 
-VERSION = '1.6.4'
+VERSION = '1.6.5'
 TITLE = 'ClimaGuard'
 
 

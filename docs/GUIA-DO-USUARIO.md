@@ -16,8 +16,8 @@ O ZMPT101B é opcional para começar: temperatura, umidade e Demonstração func
 
 ## 2. Baixe o arquivo correto
 
-1. Abra a [página da versão 1.6.4](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/tag/v1.6.4).
-2. Na área **Assets / Arquivos**, baixe **ClimaGuard-Instalador-1.6.4-x64.exe**. Você também pode usar o [download direto](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/download/v1.6.4/ClimaGuard-Instalador-1.6.4-x64.exe).
+1. Abra a [página da versão 1.6.5](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/tag/v1.6.5).
+2. Na área **Assets / Arquivos**, baixe **ClimaGuard-Instalador-1.6.5-x64.exe**. Você também pode usar o [download direto](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/download/v1.6.5/ClimaGuard-Instalador-1.6.5-x64.exe).
 3. Aguarde o download terminar. Os arquivos **Source code** são destinados a quem desenvolve o projeto; para instalar, escolha o EXE.
 
 O programa é uma compilação do projeto e ainda não tem assinatura digital própria. O Windows ou o navegador podem exibir um aviso. Confira que o arquivo veio desta organização no GitHub; se a política do seu computador impedir a instalação, procure o responsável por ele. Não é necessário desativar o antivírus.
@@ -35,7 +35,7 @@ Você não precisa instalar Python, Git, Arduino IDE ou abrir um terminal para u
 
 1. Na tela inicial, clique em **Criar conta**.
 2. Informe nome, e-mail e uma senha com pelo menos oito caracteres. Confirme a senha e conclua.
-3. A primeira conta criada nesse computador será **Administradora** e terá acesso a **Serviços de envio**. As demais mantêm suas preferências de alertas e podem configurar o Wi-Fi da placa pela USB.
+3. A partir da versão 1.6.5, todas as contas locais são **Administradoras** e têm acesso a **Serviços de envio**. As contas existentes ganham esse acesso ao abrir o aplicativo atualizado. Cada conta mantém suas próprias preferências e seu histórico de alertas.
 
 Essa é uma conta local do ClimaGuard. Ela não cria uma conta nos serviços de e-mail, SMS ou WhatsApp. Anote sua senha em um local seguro; não há recuperação automática por e-mail nesta versão.
 
@@ -88,7 +88,7 @@ A calibração atual detecta presença/ausência; ela não apresenta uma mediç�
 
 O monitoramento já funciona sem configurar os serviços de envio. Para receber mensagens:
 
-1. Entre na conta **Administradora** e abra **Serviços de envio**.
+1. Entre na sua conta e abra **Serviços de envio**. As configurações desta tela valem para todas as contas do notebook.
 2. Configure somente os canais que pretende utilizar e salve. Ative **Envios reais** quando as credenciais estiverem prontas.
 3. Abra **Meus alertas** na conta que receberá as mensagens.
 4. Ative os alertas, escolha as condições, o limite de temperatura, o intervalo e os canais.
@@ -130,7 +130,7 @@ Para uma apresentação sem a placa, selecione **Demonstração** e use os cená
 | Nome e senha corretos, mas não conecta | Rede 2,4 GHz, permissão para novos aparelhos, limite do compartilhamento e mensagem específica do aplicativo |
 | Wi-Fi salvo, mas placa não aparece | Conecte computador e placa à mesma rede e clique em Procurar placa; confira isolamento de clientes |
 | Placa conectada, sem temperatura/umidade | Peça à equipe para conferir alimentação, GPIO4 e montagem do DHT22 |
-| Energia não verificada | Confira montagem, divisor e calibração do ZMPT101B; a indicação não prova falta de energia |
+| Energia não verificada | Confira a montagem, a faixa do sinal no GPIO34 e a calibração do ZMPT101B |
 | Botões de teste desativados | Confira serviços, Envios reais, canais escolhidos, destinatários e autorização salva |
 | WhatsApp desconectado | Verifique internet, Chrome/Edge e refaça a vinculação pelo QR Code |
 | Aplicativo não abre / porta 5000 ocupada | Feche a outra instância ou o processo de desenvolvimento e abra o ClimaGuard novamente |

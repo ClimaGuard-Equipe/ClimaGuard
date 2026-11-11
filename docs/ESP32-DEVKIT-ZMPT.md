@@ -10,11 +10,11 @@ Esta revisão parte do firmware 1.5 e mantém o protocolo de rede 2, a descobert
 | DHT22 DATA | GPIO4, também marcado D4 em algumas placas |
 | DHT22 GND | GND |
 | Pull-up do DHT22 | 4,7 kΩ entre DATA e 3V3; 10 kΩ pode funcionar com fios curtos |
-| ZMPT101B OUT | GPIO34 **através de divisor de tensão** |
+| ZMPT101B OUT | GPIO34, com adaptação de tensão se a saída do módulo exceder a faixa da entrada |
 | ZMPT101B GND | GND do circuito de baixa tensão |
 | ZMPT101B VCC | Alimentação regulada compatível com o módulo; nos módulos de 5 V, usar 5 V verificados |
 
-O arquivo recebido do colega mostra a montagem anterior com interruptor. O resistor que puxava a entrada da chave para GND não deve continuar como ligação direta do OUT do módulo: a interface analógica precisa do divisor adequado.
+O módulo pode incluir amplificador, ajuste de ganho e polarização do sinal. Confirme a faixa completa de OUT na alimentação especificada para a sua variante. A ligação direta ao GPIO34 é adequada quando toda a forma de onda cabe na faixa de medição do ADC, de aproximadamente 0,15 a 3,1 V na configuração usada pelo projeto. Se a saída puder exceder essa faixa, use uma interface adequada.
 
 Para um módulo cuja saída está limitada a 0–5 V, um exemplo de divisor é:
 
@@ -26,7 +26,7 @@ OUT do módulo ── 10 kΩ ──┬── GPIO34 (ADC1)
                     GND baixa tensão
 ```
 
-Esse divisor reduz uma saída de 5 V para 2,5 V. Confirme a alimentação e a faixa real de saída do módulo antes de ligar ao ESP32. Ajustar a atenuação do ADC no código não torna o GPIO tolerante a 5 V. O GPIO34 pertence ao ADC1 e pode ser utilizado junto com o Wi-Fi.
+Esse divisor reduz pela metade a tensão e a amplitude do sinal. Confirme que a forma de onda resultante continua dentro da faixa do ADC e tem amplitude suficiente para calibrar. A atenuação configurada no software não protege o pino contra sobretensão. O GPIO34 pertence ao ADC1 e pode ser utilizado junto com o Wi-Fi.
 
 **A parte AC exige montagem e conferência por professor ou técnico qualificado, com isolamento e proteção física. Não use a protoboard para a rede elétrica. Nunca ligue fase/neutro aos GPIOs, ao GND do ESP32 ou ao USB. Para gravar pelo computador, deixe a entrada AC do módulo desligada.** Este documento descreve a interface de baixa tensão, não um procedimento de montagem da rede elétrica.
 

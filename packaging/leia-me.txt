@@ -1,4 +1,4 @@
-CLIMAGUARD 1.6.4 - WINDOWS 10/11 (64 BITS)
+CLIMAGUARD 1.6.5 - WINDOWS 10/11 (64 BITS)
 
 Este instalador cria o aplicativo ClimaGuard no menu Iniciar e pode criar um
 atalho na área de trabalho. O Python e as bibliotecas já estão incluídos.
@@ -8,7 +8,7 @@ oficial da Microsoft para prepará-lo. Essa etapa precisa de internet.
 
 COMO COMEÇAR
 1. Abra o ClimaGuard pelo ícone.
-2. Crie sua conta. A primeira conta do notebook será administradora.
+2. Crie sua conta. Todas as contas locais são administradoras.
 3. Configure os destinatários em Meus alertas e as credenciais em Serviços.
 4. Ligue a placa já programada em uma fonte USB e escolha Placa real.
    Placa e notebook devem estar na mesma rede local; a placa usa Wi-Fi 2,4 GHz.

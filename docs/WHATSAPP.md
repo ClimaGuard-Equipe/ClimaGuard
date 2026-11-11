@@ -55,7 +55,7 @@ Se o modelo tiver outras variáveis, preencha todas conforme a definição aprov
 ## 3. Teste no painel
 
 1. Abra o ClimaGuard pelo ícone ou menu Iniciar.
-2. Entre no painel em http://127.0.0.1:5000/. A primeira conta criada no notebook será administradora.
+2. Entre no painel em http://127.0.0.1:5000/. A partir da versão 1.6.5, todas as contas locais têm acesso a **Serviços de envio**.
 3. Em **Meus alertas**, ative os alertas, selecione WhatsApp e informe o destinatário com `+`, país, DDD e número, sem espaços. Use o mesmo número vinculado na Twilio.
 4. Marque a autorização de envio e **salve as preferências**.
 5. Clique em **WhatsApp** na área de teste e confirme o destinatário.

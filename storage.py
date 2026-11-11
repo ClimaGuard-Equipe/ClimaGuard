@@ -23,7 +23,7 @@ class Store:
                 CREATE TABLE IF NOT EXISTS users(
                     id INTEGER PRIMARY KEY, name TEXT NOT NULL,
                     email TEXT NOT NULL UNIQUE, password TEXT NOT NULL,
-                    admin INTEGER NOT NULL DEFAULT 0, created REAL NOT NULL);
+                    admin INTEGER NOT NULL DEFAULT 1, created REAL NOT NULL);
                 CREATE TABLE IF NOT EXISTS preferences(
                     user_id INTEGER PRIMARY KEY REFERENCES users(id), data TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS readings(
@@ -40,6 +40,8 @@ class Store:
                     message TEXT NOT NULL, status TEXT NOT NULL, detail TEXT NOT NULL,
                     created REAL NOT NULL, updated REAL NOT NULL, provider_id TEXT);
             ''')
+            # Accounts from previous installations gain access to shared settings.
+            db.execute('UPDATE users SET admin=1 WHERE admin=0')
             # A crash after submission must not automatically resend a message.
             db.execute("UPDATE alerts SET status='failed', detail='Envio interrompido. Confira o serviço antes de repetir.', updated=? WHERE status='sending'", (time.time(),))
 

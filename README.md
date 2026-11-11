@@ -4,7 +4,7 @@ Monitore temperatura, umidade e presença de energia com um **ESP32 DevKit V1**,
 
 ## Baixar e começar
 
-**[Baixar ClimaGuard 1.6.4 para Windows 10/11 — 64 bits](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/download/v1.6.4/ClimaGuard-Instalador-1.6.4-x64.exe)**
+**[Baixar ClimaGuard 1.6.5 para Windows 10/11 — 64 bits](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/download/v1.6.5/ClimaGuard-Instalador-1.6.5-x64.exe)**
 
 **[Passo a passo para instalar e usar](docs/GUIA-DO-USUARIO.md)** · [Todas as versões e arquivos](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases)
 
@@ -32,7 +32,8 @@ A placa usa Wi-Fi de 2,4 GHz. O computador pode usar Ethernet ou outra banda do 
 
 ## Recursos e limites
 
-- Descoberta da placa, conexão por IP, indicador de comunicação, gráfico, contas, preferências e histórico.
+- Descoberta da placa, conexão por IP, indicador de comunicação e gráfico.
+- Contas locais com acesso às configurações compartilhadas de envio. Cada conta tem suas próprias preferências e seu histórico de alertas.
 - Troca de Wi-Fi pela USB para qualquer conta local autenticada. A configuração permanece na placa após desligar.
 - E-mail com Resend, SMS com Twilio e WhatsApp por WPPConnect ou Twilio. Cada serviço precisa ser configurado; custos e restrições dependem do provedor.
 - WPPConnect exige Chrome ou Edge instalado e vinculação pelo QR Code. É uma integração não oficial do WhatsApp, sujeita a mudanças e desconexões.

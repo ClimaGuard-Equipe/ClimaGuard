@@ -162,16 +162,35 @@ class PortalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_reading(raw)
 
-    def test_user_data_isolation_and_admin(self):
+    def test_local_accounts_share_admin_access_but_keep_personal_data_separate(self):
         self.preferences()
         self.post('/api/demo', self.reading(32))
         other = self.app.test_client()
         token = other.get('/api/session').json['csrf_token']
         created = other.post('/api/register', json={'name':'Outro teste','email':'other@example.test','password':'other-test-password'}, headers={'X-CSRF-Token':token}).json
-        self.assertFalse(created['user']['admin'])
+        self.assertTrue(created['user']['admin'])
         self.assertEqual(other.get('/api/alerts').json['alerts'], [])
         self.assertIsNone(other.get('/api/status?source=demo').json['latest'])
-        self.assertEqual(other.get('/api/providers').status_code, 403)
+        self.assertEqual(other.get('/api/providers').status_code, 200)
+        self.assertEqual(self.app.test_client().get('/api/providers').status_code, 401)
+
+    def test_existing_account_gains_admin_access_when_reopened(self):
+        self.preferences(threshold=31)
+        self.post('/api/demo', self.reading(32))
+        with self.store.connect() as db:
+            db.execute('UPDATE users SET admin=0 WHERE id=?', (self.user_id,))
+
+        reopened = create_app(self.directory.name, worker=False)
+        client = reopened.test_client()
+        token = client.get('/api/session').json['csrf_token']
+        login = client.post('/api/login', json={'email': 'user@example.test',
+                                               'password': 'local-test-password'},
+                            headers={'X-CSRF-Token': token})
+        self.assertEqual(login.status_code, 200)
+        self.assertTrue(login.json['user']['admin'])
+        self.assertEqual(client.get('/api/providers').status_code, 200)
+        self.assertEqual(client.get('/api/preferences').json['preferences']['threshold'], 31)
+        self.assertEqual(len(client.get('/api/alerts').json['alerts']), 1)
 
     def test_device_token_and_real_readings(self):
         row = self.reading(27, False)

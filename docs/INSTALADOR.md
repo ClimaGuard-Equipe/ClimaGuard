@@ -1,6 +1,6 @@
 # Instalação do ClimaGuard no Windows
 
-Para instalar e começar, siga o [guia do usuário](GUIA-DO-USUARIO.md). O arquivo público atual é **ClimaGuard-Instalador-1.6.4-x64.exe**, disponível em [Releases](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/tag/v1.6.4).
+Para instalar e começar, siga o [guia do usuário](GUIA-DO-USUARIO.md). O arquivo público atual é **ClimaGuard-Instalador-1.6.5-x64.exe**, disponível em [Releases](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/tag/v1.6.5).
 
 ## Compatibilidade
 

@@ -180,8 +180,8 @@ def create_app(data_dir=None, worker=True, transport=None):
             hashed = generate_password_hash(password)
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE')
-                admin = not db.execute('SELECT 1 FROM users LIMIT 1').fetchone()
-                cursor = db.execute('INSERT INTO users(name,email,password,admin,created) VALUES(?,?,?,?,?)', (name, email, hashed, int(admin), time.time()))
+                cursor = db.execute('INSERT INTO users(name,email,password,admin,created) VALUES(?,?,?,1,?)',
+                                    (name, email, hashed, time.time()))
                 user_id = cursor.lastrowid
                 prefs = {**DEFAULT_PREFERENCES, 'email': email}
                 db.execute('INSERT INTO preferences VALUES(?,?)', (user_id, json.dumps(prefs)))

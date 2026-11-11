@@ -11,8 +11,8 @@
 [Setup]
 AppId={{D87FE6EA-6F56-4A7A-9B3D-0DC5A5C91732}
 AppName=ClimaGuard
-AppVersion=1.6.4
-AppVerName=ClimaGuard 1.6.4
+AppVersion=1.6.5
+AppVerName=ClimaGuard 1.6.5
 AppPublisher=Equipe ClimaGuard
 DefaultDirName={localappdata}\Programs\ClimaGuard
 DefaultGroupName=ClimaGuard
@@ -26,7 +26,7 @@ WizardStyle=modern
 SetupIconFile=climaguard.ico
 UninstallDisplayIcon={app}\ClimaGuard.exe
 OutputDir={#OutputDir}
-OutputBaseFilename=ClimaGuard-Instalador-1.6.4-x64
+OutputBaseFilename=ClimaGuard-Instalador-1.6.5-x64
 Compression=lzma2/fast
 SolidCompression=yes
 CloseApplications=yes

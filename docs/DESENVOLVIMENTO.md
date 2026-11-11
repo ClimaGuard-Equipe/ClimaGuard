@@ -60,7 +60,7 @@ O build inclui somente os arquivos definidos em `packaging/ClimaGuard.spec`. Con
 1. Atualize a versão em `desktop.py`, `index.html`, `packaging/installer.iss`, `packaging/version_info.txt`, ajuda, documentação e links de download. Preserve o AppId do instalador.
 2. Revise o Git e rode `python packaging/check_publication.py --working-tree`. Depois de preparar o commit, execute também sem essa opção para conferir o conteúdo exato do índice.
 3. Gere o instalador e valide `ClimaGuard.exe --self-test relatorio.json`, sem envios reais. Confira uma instalação limpa ou com dados temporários.
-4. Envie o commit e crie uma tag para esse mesmo código, por exemplo `v1.6.4`.
+4. Envie o commit e crie uma tag para esse mesmo código, por exemplo `v1.6.5`.
 5. Crie uma **Release**, anexe o EXE, o guia e `SHA256SUMS.txt` e só publique após conferir os arquivos. Binários devem ir nos arquivos da Release, não no histórico Git.
 6. Verifique o link de download sem autenticação. Mantenha as versões anteriores para quem precisa consultar histórico.
 
