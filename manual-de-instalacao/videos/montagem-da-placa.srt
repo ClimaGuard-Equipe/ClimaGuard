@@ -1,0 +1,44 @@
+1
+00:00:00,600 --> 00:00:07,840
+Agora vamos montar a placa do ClimaGuard: ligar o sensor de temperatura e o sensor de energia no ESP32.
+
+2
+00:00:10,040 --> 00:00:23,240
+Você vai precisar da placa ESP32 DevKit, do sensor de temperatura DHT vinte e dois, do sensor de energia ZMPT cento e um B, de dois resistores de dez quilo-ohms, fios jumper, uma protoboard e o cabo USB.
+
+3
+00:00:25,440 --> 00:00:42,880
+Atenção: faça todas as ligações com a placa desligada. A parte do sensor de energia que vai na tomada, de cento e vinte e sete ou duzentos e vinte volts, só pode ser ligada por um professor ou técnico, com isolamento. Nunca coloque fio da tomada na protoboard nem nos pinos da placa.
+
+4
+00:00:45,080 --> 00:01:02,680
+Estes são os pinos que vamos usar. Do lado direito: três vê três, que fornece três vírgula três volts, GND, que é o negativo, e D quatro, que recebe os dados do sensor de temperatura. Do lado esquerdo: VIN, com cinco volts do USB, GND, e D trinta e quatro, que lê o sinal do sensor de energia.
+
+5
+00:01:04,880 --> 00:01:23,560
+Comece pelo sensor de temperatura. Ligue o pino mais do DHT vinte e dois no três vê três, o pino OUT, de dados, no D quatro, e o pino menos no GND. Se o seu sensor for o modelo de quatro pernas, sem plaquinha, coloque também um resistor de quatro vírgula sete quilo-ohms entre o pino de dados e o três vê três.
+
+6
+00:01:25,760 --> 00:01:33,760
+Agora o sensor de energia. Ligue o VCC do ZMPT no pino VIN, que tem cinco volts, e o GND do sensor no GND da placa, do lado esquerdo.
+
+7
+00:01:35,960 --> 00:01:52,800
+O pino OUT do sensor não vai direto na placa. Ele passa por um resistor de dez quilo-ohms até o D trinta e quatro. E, do D trinta e quatro, outro resistor de dez quilo-ohms vai até o GND. Esse divisor reduz o sinal pela metade, para não passar do que o ESP32 aguenta.
+
+8
+00:01:55,000 --> 00:02:07,680
+Esta é a montagem completa. Confira cada fio com calma antes de ligar o USB: o sensor de temperatura no três vê três, D quatro e GND, e o sensor de energia no VIN, GND e, pelos resistores, no D trinta e quatro.
+
+9
+00:02:09,880 --> 00:02:26,920
+Do outro lado do sensor de energia ficam os parafusos verdes, que recebem fase e neutro da tomada. Essa parte deve ser ligada por um professor ou técnico, com isolamento e dentro de uma caixa fechada. Sempre que for ligar a placa no computador, deixe a tomada desconectada.
+
+10
+00:02:29,120 --> 00:02:50,480
+O sensor de energia começa desligado e precisa ser calibrado uma vez. Com a montagem conferida e energia na tomada, segure o botão BOOT da placa por três segundos e solte. No celular, entre na rede ClimaGuard da placa, abra o endereço um nove dois ponto um seis oito ponto quatro ponto um barra power, marque a caixa e toque em Calibrar e ativar.
+
+11
+00:02:52,680 --> 00:03:05,230
+Pronto! No ClimaGuard vai aparecer Energia presente. Se a energia cair, aparece Energia ausente e você recebe o alerta. Só lembre: a placa precisa continuar ligada para avisar, então use um power bank.
+

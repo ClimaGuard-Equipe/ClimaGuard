@@ -1,0 +1,52 @@
+1
+00:00:00,600 --> 00:00:06,920
+Olá! Em poucos minutos, você vai instalar o ClimaGuard e receber o primeiro alerta de temperatura.
+
+2
+00:00:09,120 --> 00:00:20,520
+Separe um computador com Windows, a placa ESP32 já programada, um cabo USB de dados, um carregador USB, e o nome e a senha de uma rede Wi-Fi de 2,4 GHz.
+
+3
+00:00:22,720 --> 00:00:30,200
+Primeiro, entre na página do ClimaGuard no GitHub e baixe o arquivo ClimaGuard Instalador, que termina em ponto e x e.
+
+4
+00:00:32,400 --> 00:00:44,120
+Dê dois cliques no arquivo. Se o Windows mostrar um aviso, clique em Mais informações e depois em Executar assim mesmo. Vá clicando em Avançar, depois em Instalar e, no final, em Concluir.
+
+5
+00:00:46,320 --> 00:00:56,800
+Com o programa aberto, clique em Criar conta, preencha seu nome, e-mail e uma senha de pelo menos oito caracteres, e clique em Criar conta e continuar. Anote essa senha.
+
+6
+00:00:59,000 --> 00:01:07,720
+Agora ligue a placa no computador com o cabo USB. No menu, abra Wi-Fi da placa, escolha a porta que apareceu e clique em Verificar placa USB.
+
+7
+00:01:09,920 --> 00:01:20,480
+Digite o nome e a senha do Wi-Fi, exatamente como aparecem no celular. Clique em Salvar Wi-Fi na placa e espere a mensagem Rede salva na placa. Não tire o cabo antes disso.
+
+8
+00:01:22,680 --> 00:01:31,040
+Depois, conecte o computador nessa mesma rede, tire a placa do computador e ligue-a no carregador, no lugar que você quer monitorar.
+
+9
+00:01:33,240 --> 00:01:43,400
+Volte para a Visão geral, escolha Placa real e clique em Procurar placa. Quando aparecer Placa conectada, em verde, a temperatura e a umidade já aparecem na tela.
+
+10
+00:01:45,600 --> 00:01:58,360
+Em Meus alertas, marque Alertas ativos e escolha o limite de temperatura, por exemplo trinta graus. Escolha se quer receber por e-mail, SMS ou WhatsApp, coloque seu contato, marque a autorização e salve.
+
+11
+00:02:00,560 --> 00:02:12,720
+Para o WhatsApp, abra Serviços de envio, escolha WPPConnect e clique em Conectar WhatsApp. No celular, vá em Aparelhos conectados e leia o QR Code. Por fim, marque Envios reais ativados e salve.
+
+12
+00:02:14,920 --> 00:02:20,910
+Volte em Meus alertas e envie uma mensagem de teste para conferir se ela chegou no seu celular.
+
+13
+00:02:23,110 --> 00:02:32,220
+Pronto! No dia a dia, deixe a placa ligada, o computador na mesma rede e o ClimaGuard aberto. Se a temperatura passar do limite, você recebe o aviso.
+

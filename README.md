@@ -6,7 +6,7 @@ Monitore temperatura, umidade e presença de energia com um **ESP32 DevKit V1**,
 
 **[Baixar ClimaGuard 1.6.5 para Windows 10/11 — 64 bits](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases/download/v1.6.5/ClimaGuard-Instalador-1.6.5-x64.exe)**
 
-**[Passo a passo para instalar e usar](docs/GUIA-DO-USUARIO.md)** · [Todas as versões e arquivos](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases)
+**[Manual de instalação com vídeos](manual-de-instalacao/README.md)** · [Passo a passo para instalar e usar](docs/GUIA-DO-USUARIO.md) · [Todas as versões e arquivos](https://github.com/ClimaGuard-Equipe/ClimaGuard/releases)
 
 1. Baixe o instalador pelo link acima e siga o assistente. Python e bibliotecas já estão incluídos.
 2. Abra o **ClimaGuard** pelo ícone e crie sua conta.
@@ -53,6 +53,7 @@ O instalador não grava firmware nem instala o driver USB da placa. A equipe té
 
 | Assunto | Guia |
 | --- | --- |
+| Vídeos: montagem da placa, instalação e configuração | [Manual de instalação](manual-de-instalacao/README.md) |
 | Instalar, conectar e resolver problemas comuns | [Guia do usuário](docs/GUIA-DO-USUARIO.md) |
 | Instalação, atualização e arquivos locais | [Windows](docs/INSTALADOR.md) |
 | Trocar a rede | [Wi-Fi da placa](docs/TROCAR-WIFI.md) |
