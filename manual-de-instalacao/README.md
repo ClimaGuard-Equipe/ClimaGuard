@@ -4,12 +4,23 @@ Passo a passo em vídeo para montar a placa, instalar o programa e receber o pri
 
 ## Vídeos
 
-| Vídeo | Conteúdo | Duração |
-| --- | --- | --- |
-| [![Montagem da placa](imagens/capa-montagem.png)](videos/montagem-da-placa.mp4)<br>**[1. Montagem da placa](videos/montagem-da-placa.mp4)** · [legendas](videos/montagem-da-placa.srt) | Pinos do ESP32, ligação do DHT22 e do ZMPT101B, segurança da tomada e calibração do sensor de energia | 3 min 07 s |
-| [![Instalação e configuração](imagens/capa-instalacao.png)](videos/instalacao.mp4)<br>**[2. Instalação e configuração](videos/instalacao.mp4)** · [legendas](videos/instalacao.srt) | Baixar e instalar o programa, criar a conta, salvar o Wi-Fi na placa, ver as leituras e configurar os alertas | 2 min 34 s |
+Clique no vídeo para assistir. Quem já recebeu a placa montada e programada pode começar pelo vídeo 2.
 
-Para assistir, abra o vídeo e clique em **View raw** (ou no botão de download). Quem já recebeu a placa montada e programada pode começar pelo vídeo 2.
+### Vídeo 1 · Montagem da placa (3 min 07 s)
+
+Pinos do ESP32, ligação do DHT22 e do ZMPT101B, segurança da tomada e calibração do sensor de energia.
+
+https://github.com/user-attachments/assets/6898d9c6-6c90-4067-b0b5-2ba444439bd3
+
+[Baixar o vídeo](videos/montagem-da-placa.mp4) · [Legendas](videos/montagem-da-placa.srt)
+
+### Vídeo 2 · Instalação e configuração (2 min 34 s)
+
+Baixar e instalar o programa, criar a conta, salvar o Wi-Fi na placa, ver as leituras e configurar os alertas.
+
+https://github.com/user-attachments/assets/7b491f71-9eee-4869-a4cf-7abdf303fa82
+
+[Baixar o vídeo](videos/instalacao.mp4) · [Legendas](videos/instalacao.srt)
 
 ## 1. Montagem da placa
 
